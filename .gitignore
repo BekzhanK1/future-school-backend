@@ -113,3 +113,6 @@ dmypy.json
 # FastAPI specific
 *.db
 *.sqlite3
+
+.vscode/
+.pytest_cache/
