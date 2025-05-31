@@ -8,7 +8,7 @@ class ItemCreate(BaseModel):
     price: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @field_validator("price")
     @classmethod
@@ -29,7 +29,7 @@ class ItemRead(ItemCreate):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ItemUpdate(BaseModel):
@@ -45,4 +45,4 @@ class ItemUpdate(BaseModel):
         return value
 
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.db.models import Item
+from app.models import Item
 from app.schemas.item import ItemCreate, ItemRead, ItemUpdate
 
 

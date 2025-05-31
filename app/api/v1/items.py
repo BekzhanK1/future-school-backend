@@ -7,17 +7,17 @@ from app.db.session import get_db
 router = APIRouter()
 
 
-@router.post("/items/", response_model=ItemRead)
+@router.post("", response_model=ItemRead)
 async def create_item_router(item: ItemCreate, db: AsyncSession = Depends(get_db)):
     return await create_item(item, db)
 
 
-@router.get("/items/", response_model=list[ItemRead])
+@router.get("", response_model=list[ItemRead])
 async def read_items_router(db: AsyncSession = Depends(get_db)):
     return await get_items(db)
 
 
-@router.get("/items/{item_id}", response_model=ItemRead)
+@router.get("/{item_id}", response_model=ItemRead)
 async def read_item_router(item_id: int, db: AsyncSession = Depends(get_db)):
     item = await get_item(item_id, db)
     if not item:
@@ -25,7 +25,7 @@ async def read_item_router(item_id: int, db: AsyncSession = Depends(get_db)):
     return item
 
 
-@router.patch("/items/{item_id}", response_model=ItemRead)
+@router.patch("/{item_id}", response_model=ItemRead)
 async def update_item_router(
     item_id: int, item: ItemUpdate, db: AsyncSession = Depends(get_db)
 ):
