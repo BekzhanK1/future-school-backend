@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
-import asyncio
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1 import router
 from app.db.init_db import init_db, init_superadmin
 from app.db.session import AsyncSessionLocal
-from app.api.v1 import router
 
 
 @asynccontextmanager
@@ -17,6 +19,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")

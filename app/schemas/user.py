@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
-from enum import Enum
 from typing import Optional
+
+from pydantic import BaseModel, EmailStr
+
 from app.models.user import UserRole
 
 

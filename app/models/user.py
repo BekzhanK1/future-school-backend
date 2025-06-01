@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
-from app.db.base_class import Base
 import enum
+
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
+from app.db.base_class import Base
 
 
 class UserRole(enum.Enum):

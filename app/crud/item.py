@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.models import Item
-from app.schemas.item import ItemCreate, ItemRead, ItemUpdate
+from app.schemas.item import ItemCreate, ItemUpdate
 
 
 async def create_item(item_create: ItemCreate, db: AsyncSession):

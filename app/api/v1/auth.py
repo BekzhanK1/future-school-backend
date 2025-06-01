@@ -1,79 +1,140 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.session import get_db
-from app.schemas.user import UserOut
-from app.schemas.auth_session import AuthSessionOut, RefreshTokenInput
-from app.core.security import verify_password, create_access_token, create_refresh_token
-from app.crud.user import user_crud
-from app.crud.auth_session import auth_session_crud
-from app.core.security import decode_token
-from datetime import datetime
+from app.dependencies.auth import get_current_session, get_current_user, require_roles
+from app.models.user import User, UserRole
+from app.schemas import LoginInput, RefreshTokenInput, UserOut
+from app.schemas.auth_session import AuthSessionOut
+from app.services.auth_service import (
+    get_user_sessions,
+    login_user,
+    logout_all_sessions,
+    logout_by_refresh_token,
+    refresh_user_token,
+    deactivate_session,
+)
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 
 
+@router.get("/sessions", response_model=list[AuthSessionOut])
+async def list_sessions(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    current_session: AuthSessionOut = Depends(get_current_session),
+):
+    return await get_user_sessions(db, current_user.id, current_session.id)
+
+
+@router.get("/me", response_model=UserOut)
+async def get_me(current_user: User = Depends(get_current_user)):
+    """
+    Get the current authenticated user.
+    """
+    return current_user
+
+
 @router.post("/login")
-async def login(request: Request, db: AsyncSession = Depends(get_db)):
-    data = await request.json()
-    username = data.get("username")
-    password = data.get("password")
-
-    user = await user_crud.get_by_username(db, username)
-    if not user or not verify_password(password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-        )
-
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
-
-    user_agent = request.headers.get("user-agent")
-    ip_address = request.client.host
-
-    await auth_session_crud.create(
-        db,
-        user_id=user.id,
-        refresh_token=refresh_token,
-        user_agent=user_agent,
-        ip_address=ip_address,
-    )
-
-    return respond_with_tokens(UserOut.from_orm(user), access_token, refresh_token)
+@limiter.limit("5/minute")
+async def login(
+    input: LoginInput, request: Request, db: AsyncSession = Depends(get_db)
+):
+    user_out, access_token, refresh_token = await login_user(input, request, db)
+    return respond_with_tokens(user_out, access_token, refresh_token)
 
 
 @router.post("/refresh")
 async def refresh_token(
-    data: RefreshTokenInput,
+    request: Request,
+    data: RefreshTokenInput = None,
     db: AsyncSession = Depends(get_db),
 ):
-    payload = decode_token(data.refresh_token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    refresh_token = data.refresh_token if data else request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
 
-    user_id = int(payload.get("sub"))
-    session = await auth_session_crud.get_by_refresh_token(db, data.refresh_token)
-
-    if not session or not session.is_active:
-        raise HTTPException(status_code=401, detail="Session not active")
-
-    if session.expires_at < datetime.utcnow():
-        await auth_session_crud.deactivate(db, session)
-        raise HTTPException(status_code=401, detail="Session expired")
-
-    # rotate refresh token
-    new_refresh_token = create_refresh_token({"sub": str(user_id)})
-    session.refresh_token = new_refresh_token
-    await db.commit()
-
-    new_access_token = create_access_token({"sub": str(user_id)})
-
-    user = await user_crud.get_by_id(db, user_id)
-    user_out = UserOut.from_orm(user)
+    user_out, new_access_token, new_refresh_token = await refresh_user_token(
+        refresh_token, db
+    )
     return respond_with_tokens(user_out, new_access_token, new_refresh_token)
 
 
-def respond_with_tokens(user, access_token: str, refresh_token: str):
+@router.post("/logout")
+async def logout(
+    data: RefreshTokenInput,
+    db: AsyncSession = Depends(get_db),
+):
+    await logout_by_refresh_token(db, data.refresh_token)
+
+    response = JSONResponse(content={"detail": "Logged out successfully."})
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return response
+
+
+@router.post("/logout-cookie")
+async def logout_cookie(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+
+    await logout_by_refresh_token(db, refresh_token)
+
+    response = JSONResponse(content={"detail": "Logged out successfully."})
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return response
+
+
+@router.post("/logout-all")
+async def logout_all(
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    await logout_all_sessions(db, current_user.id)
+
+    response = JSONResponse(content={"detail": "All sessions logged out successfully."})
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return response
+
+
+@router.post("/logout-all-cookie")
+async def logout_all_cookie(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await logout_all_sessions(db, current_user.id)
+
+    response = JSONResponse(content={"detail": "All sessions logged out successfully."})
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return response
+
+
+@router.post("/terminate-session/{session_id}")
+async def terminate_session(
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Terminate a specific user session by ID.
+    """
+    return await deactivate_session(db, session_id, current_user.id)
+
+
+def respond_with_tokens(user: UserOut, access_token: str, refresh_token: str):
     response = JSONResponse(
         content={
             "access_token": access_token,
@@ -91,6 +152,7 @@ def respond_with_tokens(user, access_token: str, refresh_token: str):
         samesite="strict",
         max_age=900,  # 15 minutes
     )
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,

@@ -1,22 +1,17 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
 
-class AuthSessionBase(BaseModel):
+
+class AuthSessionOut(BaseModel):
+    id: int
     user_agent: Optional[str]
     ip_address: Optional[str]
-
-
-class AuthSessionOut(AuthSessionBase):
-    id: int
     is_active: bool
+    is_current: bool
     created_at: datetime
     expires_at: datetime
 
     class Config:
-        orm_mode = True
-
-
-class RefreshTokenInput(BaseModel):
-    refresh_token: str
+        from_attributes = True

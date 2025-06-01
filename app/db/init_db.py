@@ -1,12 +1,10 @@
-from app.db.base_class import Base
-from app.models import Item, User, School, Classroom, AuthSession
-from app.db.session import engine
-
-
 import os
+
+from app.crud.user import user_crud
+from app.db.base_class import Base
+from app.db.session import engine
 from app.schemas.user import UserCreate, UserRole
 from app.services.user_service import create_user
-from app.crud.user import user_crud
 
 
 async def init_db():

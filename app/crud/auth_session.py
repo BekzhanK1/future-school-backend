@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.models.auth_session import AuthSession
-from datetime import datetime
 
 
 class CRUDSession:
@@ -36,6 +36,7 @@ class CRUDSession:
     async def deactivate(self, db: AsyncSession, session: AuthSession):
         session.is_active = False
         await db.commit()
+        await db.refresh(session)
 
     async def list_by_user(self, db: AsyncSession, user_id: int):
         result = await db.execute(
@@ -44,6 +45,17 @@ class CRUDSession:
             .order_by(AuthSession.created_at.desc())
         )
         return result.scalars().all()
+
+    async def get_by_id(self, db: AsyncSession, session_id: int) -> AuthSession | None:
+        return await db.get(AuthSession, session_id)
+
+    async def delete_by_id(self, db: AsyncSession, session_id: int):
+        session = await self.get_by_id(db, session_id)
+        if session:
+            await db.delete(session)
+            await db.commit()
+            return True
+        return False
 
 
 auth_session_crud = CRUDSession()

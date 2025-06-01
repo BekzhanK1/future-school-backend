@@ -1,10 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.user import UserCreate
-from app.models.school import School
-from app.models.classroom import Classroom
-from app.models.user import UserRole
-from app.crud.user import user_crud
+
 from app.core.security import hash_password
+from app.crud.user import user_crud
+from app.models.classroom import Classroom
+from app.models.school import School
+from app.schemas.user import UserCreate
 
 
 async def create_user(user_in: UserCreate, db: AsyncSession):

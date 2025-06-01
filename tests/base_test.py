@@ -1,10 +1,11 @@
-from fastapi.testclient import TestClient
 import pytest
-from main import app
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.db.models import Base
 from app.db.session import get_db
-from app.db.models import Base, Item
+from main import app
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
@@ -17,7 +18,7 @@ TestingSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit
 
 @pytest.fixture()
 def client():
-    from sqlalchemy.ext.asyncio import AsyncSession
+    pass
 
     async def init_db():
         async with engine.begin() as conn:

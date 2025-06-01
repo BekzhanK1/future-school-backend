@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Float, Integer, String
+
 from app.db.base_class import Base  # ← we'll move Base to a shared place
 
 

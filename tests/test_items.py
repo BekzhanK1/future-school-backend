@@ -1,4 +1,3 @@
-from .base_test import client
 
 
 def test_get_items(client):
