@@ -11,7 +11,7 @@ class UserBase(BaseModel):
     role: UserRole
     is_active: bool = True
     school_id: Optional[int] = None
-    classroom_id: Optional[int] = None
+    kundelik_id: Optional[str] = None
 
 
 class UserCreate(UserBase):

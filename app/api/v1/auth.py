@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.dependencies.auth import get_current_session, get_current_user, require_roles
-from app.models.user import User, UserRole
+from app.dependencies.auth import get_current_session, get_current_user
+from app.models.user import User
 from app.schemas import LoginInput, RefreshTokenInput, UserOut
 from app.schemas.auth_session import AuthSessionOut
 from app.services.auth_service import (

@@ -25,7 +25,7 @@ async def init_superadmin(db):
         username=username,
         email=email,
         password=password,
-        role=UserRole.superadmin,
+        role=UserRole.SUPERADMIN,
         is_active=True,
     )
 

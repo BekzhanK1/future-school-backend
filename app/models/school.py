@@ -8,4 +8,9 @@ class School(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
-    address = Column(String, nullable=True)
+    city = Column(String, nullable=False)
+    country = Column(String, nullable=False, default="Kazakhstan")
+    logo_url = Column(String, nullable=True)
+    contact_email = Column(String, nullable=True)
+    contact_phone = Column(String, nullable=True)
+    kundelik_id = Column(String, unique=True, nullable=True, index=True)
