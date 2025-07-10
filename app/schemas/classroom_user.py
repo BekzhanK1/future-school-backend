@@ -19,4 +19,4 @@ class ClassroomUserOut(BaseModel):
 
     class Config:
         from_attributes = True
-        allow_population_by_field_name = True
+        # allow_population_by_field_name = True

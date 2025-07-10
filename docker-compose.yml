@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: future_school_db
+    restart: always
+    environment:
+      POSTGRES_USER: astar
+      POSTGRES_PASSWORD: astar123
+      POSTGRES_DB: astar
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
