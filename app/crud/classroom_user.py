@@ -14,8 +14,15 @@ class CRUDClassroomUser:
         classroom_user = ClassroomUser(**obj_in.model_dump())
         db.add(classroom_user)
         await db.commit()
-        await db.refresh(classroom_user)
-        return classroom_user
+        # eager-load relations to avoid lazy load in response
+        result = await db.execute(
+            select(ClassroomUser)
+            .options(
+                selectinload(ClassroomUser.user), selectinload(ClassroomUser.classroom)
+            )
+            .where(ClassroomUser.id == classroom_user.id)
+        )
+        return result.scalars().first()
 
     async def list_by_classroom(
         self, db: AsyncSession, classroom_id: int

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.classroom import classroom_crud
 from app.models.classroom import Classroom
-from app.schemas.classroom import ClassroomCreate, ClassroomOut, ClassroomUpdate
+from app.schemas.classroom import ClassroomCreate, ClassroomOut, ClassroomUpdate, BulkClassroomCreate
 
 
 async def create_classroom(
@@ -65,3 +65,31 @@ async def update_classroom_by_id(
     :return: The updated Classroom object if successful, otherwise None.
     """
     return await classroom_crud.update_by_id(db, classroom_id, classroom_update)
+
+
+async def create_bulk_classrooms(
+    bulk_create: BulkClassroomCreate, db: AsyncSession
+) -> list[Classroom]:
+    """
+    Create multiple classrooms for a school in bulk.
+    
+    :param bulk_create: BulkClassroomCreate schema containing bulk creation details.
+    :param db: Database session.
+    :return: List of created Classroom objects.
+    """
+    classrooms = []
+    letters = ['A', 'B', 'C', 'D', 'E']  # Support up to 5 classes per grade
+    
+    for grade in bulk_create.grades:
+        for i in range(bulk_create.letters_per_grade):
+            letter = letters[i]
+            classroom_data = ClassroomCreate(
+                grade=grade,
+                letter=letter,
+                language=bulk_create.language,
+                school_id=bulk_create.school_id
+            )
+            classroom = await classroom_crud.create(db, classroom_data)
+            classrooms.append(classroom)
+    
+    return classrooms

@@ -1,0 +1,157 @@
+{
+    "info": {
+        "name": "Astar LMS API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Auth - Login",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/v1/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "v1",
+                        "auth",
+                        "login"
+                    ]
+                },
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"schooladmin1\",\n  \"password\": \"password123\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Admin - List Users",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/v1/admin/users",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "v1",
+                        "admin",
+                        "users"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Teacher - Create Section",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/v1/teacher/sections",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "v1",
+                        "teacher",
+                        "sections"
+                    ]
+                },
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"course_id\": 1,\n  \"title\": \"Week 1\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Teacher - Upload Resource",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "multipart/form-data"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/v1/teacher/resources/upload?course_section_id=1&title=Intro%20PDF",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "v1",
+                        "teacher",
+                        "resources",
+                        "upload"
+                    ],
+                    "query": [
+                        {
+                            "key": "course_section_id",
+                            "value": "1"
+                        },
+                        {
+                            "key": "title",
+                            "value": "Intro PDF"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Student - List Sections",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/v1/student/courses/1/sections",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "v1",
+                        "student",
+                        "courses",
+                        "1",
+                        "sections"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Student - List Resources",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/v1/student/sections/1/resources",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "v1",
+                        "student",
+                        "sections",
+                        "1",
+                        "resources"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8000"
+        }
+    ]
+}

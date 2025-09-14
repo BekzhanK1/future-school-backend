@@ -14,6 +14,12 @@ class CRUDSession:
         user_agent: str,
         ip_address: str
     ) -> AuthSession:
+        # Сначала деактивируем все существующие сессии для этого пользователя
+        existing_sessions = await self.list_by_user(db, user_id)
+        for existing_session in existing_sessions:
+            if existing_session.is_active:
+                await self.deactivate(db, existing_session)
+        
         session = AuthSession(
             user_id=user_id,
             refresh_token=refresh_token,

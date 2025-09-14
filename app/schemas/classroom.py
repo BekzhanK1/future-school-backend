@@ -46,3 +46,22 @@ class ClassroomOut(BaseModel):
 class ClassroomUpdate(BaseModel):
     grade: int | None = None
     letter: str | None = None
+
+
+class BulkClassroomCreate(BaseModel):
+    school_id: int
+    language: str = "kz"
+    grades: list[int] = list(range(1, 13))  # Default to grades 1-12
+    letters_per_grade: int = 1  # Number of classes per grade (1A, 1B, etc.)
+
+    @field_validator("grades")
+    def validate_grades(cls, v: list[int]) -> list[int]:
+        if not all(1 <= grade <= 12 for grade in v):
+            raise ValueError("All grades must be between 1 and 12.")
+        return sorted(set(v))  # Remove duplicates and sort
+
+    @field_validator("letters_per_grade")
+    def validate_letters_per_grade(cls, v: int) -> int:
+        if not (1 <= v <= 5):
+            raise ValueError("Letters per grade must be between 1 and 5.")
+        return v

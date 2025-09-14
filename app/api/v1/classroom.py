@@ -4,9 +4,10 @@ from app.db.session import get_db
 from app.dependencies.auth import get_current_user, require_roles
 from app.models.user import User, UserRole
 from app.models.classroom import Classroom
-from app.schemas.classroom import ClassroomCreate, ClassroomOut, ClassroomUpdate
+from app.schemas.classroom import ClassroomCreate, ClassroomOut, ClassroomUpdate, BulkClassroomCreate
 from app.services.classroom_service import (
     create_classroom,
+    create_bulk_classrooms,
     get_classroom_by_id,
     get_classroom_by_kundelik_id,
     list_all_for_school,
@@ -26,6 +27,19 @@ async def create(
     Create a new classroom.
     """
     return ClassroomOut.model_validate(await create_classroom(classroom_in, db))
+
+
+@router.post("/bulk", response_model=list[ClassroomOut])
+async def create_bulk(
+    bulk_create: BulkClassroomCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.SUPERADMIN)),
+):
+    """
+    Create multiple classrooms for a school in bulk (e.g., 1A, 2B, etc. for grades 1-12).
+    """
+    classrooms = await create_bulk_classrooms(bulk_create, db)
+    return [ClassroomOut.model_validate(classroom) for classroom in classrooms]
 
 
 @router.get("/", response_model=list[ClassroomOut])

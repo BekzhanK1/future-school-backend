@@ -17,7 +17,7 @@ async def init_superadmin(db):
     password = os.getenv("SUPERADMIN_PASSWORD")
     username = os.getenv("SUPERADMIN_USERNAME", "superadmin")
 
-    existing = await user_crud.get_by_email(db, email)
+    existing = await user_crud.get_by_username(db, username)
     if existing:
         return  # already created
 
@@ -28,5 +28,4 @@ async def init_superadmin(db):
         role=UserRole.SUPERADMIN,
         is_active=True,
     )
-
     await create_user(superadmin, db)

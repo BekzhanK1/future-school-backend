@@ -6,6 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import router
 from app.db.init_db import init_db, init_superadmin
 from app.db.session import AsyncSessionLocal
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 @asynccontextmanager

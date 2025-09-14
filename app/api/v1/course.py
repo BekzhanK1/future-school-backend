@@ -4,9 +4,10 @@ from app.db.session import get_db
 from app.dependencies.auth import get_current_user, require_roles
 from app.models.user import User, UserRole
 from app.models.course import Course
-from app.schemas.course import CourseCreate, CourseOut, CourseUpdate
+from app.schemas.course import CourseCreate, CourseOut, CourseUpdate, BulkCourseCreate
 from app.services.course_service import (
     create_course,
+    create_bulk_courses,
     get_course_by_id,
     get_course_by_course_code,
     list_all_courses,
@@ -30,6 +31,21 @@ async def create(
     Create a new course.
     """
     return CourseOut.model_validate(await create_course(course_in, db))
+
+
+@router.post("/bulk", response_model=list[CourseOut])
+async def create_bulk(
+    bulk_create: BulkCourseCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(UserRole.SUPERADMIN, UserRole.SCHOOLADMIN)
+    ),
+):
+    """
+    Create multiple courses in bulk (e.g., Math for grade 1, Kazakh language for grade 5, etc.).
+    """
+    courses = await create_bulk_courses(bulk_create, db)
+    return [CourseOut.model_validate(course) for course in courses]
 
 
 @router.get("/all", response_model=list[CourseOut])

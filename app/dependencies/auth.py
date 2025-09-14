@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import decode_token
 from app.crud.auth_session import auth_session_crud
 from app.crud.user import user_crud
+from app.crud.subject_group import subject_group_crud
 from app.db.session import get_db
 from app.models.user import User, UserRole
 
@@ -100,3 +101,27 @@ def require_roles(*roles: UserRole, logic: Literal["or", "and"] = "or"):
         return user
 
     return role_checker
+
+
+async def require_course_teacher_or_admin(
+    course_id: int, 
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Check if user is a teacher assigned to the course or admin/superadmin.
+    """
+    # Superadmin and schooladmin can always access
+    if user.role in [UserRole.SUPERADMIN, UserRole.SCHOOLADMIN]:
+        return user
+    
+    # For teachers, check if they are assigned to this course
+    if user.role == UserRole.TEACHER:
+        subject_groups = await subject_group_crud.list_by_teacher_and_course(db, user.id, course_id)
+        if subject_groups:
+            return user
+    
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You don't have permission to manage this course"
+    )

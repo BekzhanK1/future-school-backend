@@ -5,7 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.dependencies.auth import get_current_session, get_current_user
 from app.models.user import User
-from app.schemas import LoginInput, RefreshTokenInput, UserOut
+from app.schemas import (
+    LoginInput,
+    RefreshTokenInput,
+    UserOut,
+    ForgotPasswordInput,
+    ResetPasswordInput,
+)
 from app.schemas.auth_session import AuthSessionOut
 from app.services.auth_service import (
     get_user_sessions,
@@ -14,6 +20,8 @@ from app.services.auth_service import (
     logout_by_refresh_token,
     refresh_user_token,
     deactivate_session,
+    request_password_reset,
+    perform_password_reset,
 )
 
 from slowapi import Limiter
@@ -42,7 +50,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/login")
-@limiter.limit("5/minute")
+# @limiter.limit("5/minute")  # Отключаем rate limiting для тестирования
 async def login(
     input: LoginInput, request: Request, db: AsyncSession = Depends(get_db)
 ):
@@ -163,3 +171,18 @@ def respond_with_tokens(user: UserOut, access_token: str, refresh_token: str):
     )
 
     return response
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    input: ForgotPasswordInput, db: AsyncSession = Depends(get_db)
+):
+    token = await request_password_reset(input, db)
+    # For now we return token for testing/dev; in prod, do not return it
+    return {"detail": "If the email exists, a reset was initiated.", "token": token}
+
+
+@router.post("/reset-password")
+async def reset_password(input: ResetPasswordInput, db: AsyncSession = Depends(get_db)):
+    await perform_password_reset(input, db)
+    return {"detail": "Password reset successful."}

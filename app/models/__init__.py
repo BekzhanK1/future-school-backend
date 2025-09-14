@@ -4,3 +4,9 @@ from .classroom import *
 from .course import *
 from .user import *
 from .school import *
+from .assignment import *
+from .submission import *
+from .grade import *
+from .course_section import *
+from .resource import *
+from .subject_group import *

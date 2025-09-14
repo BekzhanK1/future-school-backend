@@ -24,5 +24,17 @@ class CRUDUser:
     async def get_by_id(self, db: AsyncSession, user_id: int) -> User:
         return await db.get(User, user_id)
 
+    async def list_by_roles(self, db: AsyncSession, roles: list) -> list[User]:
+        result = await db.execute(select(User).where(User.role.in_(roles)))
+        return result.scalars().all()
+
+    async def delete_by_id(self, db: AsyncSession, user_id: int) -> bool:
+        user = await db.get(User, user_id)
+        if not user:
+            return False
+        await db.delete(user)
+        await db.commit()
+        return True
+
 
 user_crud = CRUDUser()

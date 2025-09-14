@@ -24,3 +24,13 @@ class UserOut(UserBase):
     class Config:
         from_attributes = True
         use_enum_values = True
+
+
+class UserMinimalOut(BaseModel):
+    id: int
+    username: str
+    role: UserRole
+
+    class Config:
+        from_attributes = True
+        use_enum_values = True

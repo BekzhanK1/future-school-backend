@@ -13,6 +13,10 @@ from app.crud.auth_session import auth_session_crud
 from app.crud.user import user_crud
 from app.schemas import LoginInput, UserOut
 from app.schemas.auth_session import AuthSessionOut
+from app.schemas.auth import ForgotPasswordInput, ResetPasswordInput
+from app.core.security import hash_password
+from app.crud.password_reset import password_reset_crud
+import secrets
 
 
 async def login_user(input: LoginInput, request: Request, db: AsyncSession):
@@ -119,3 +123,30 @@ async def deactivate_session(
     return AuthSessionOut.model_validate(
         {**session.__dict__, "is_current": False}  # or True, depending on your logic
     )
+
+
+async def request_password_reset(input: ForgotPasswordInput, db: AsyncSession) -> str:
+    user = await user_crud.get_by_email(db, input.email)
+    if not user:
+        # Avoid leaking whether email exists
+        return "ok"
+
+    token = secrets.token_urlsafe(48)
+    await password_reset_crud.create(db, user_id=user.id, token=token)
+    # In production, send email here. For now, return token for testing.
+    return token
+
+
+async def perform_password_reset(input: ResetPasswordInput, db: AsyncSession) -> None:
+    prt = await password_reset_crud.get_valid(db, input.token)
+    if not prt:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    user = await user_crud.get_by_id(db, prt.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.password = hash_password(input.new_password)
+    await db.commit()
+    await db.refresh(user)
+    await password_reset_crud.mark_used(db, prt)

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.course import course_crud
 from app.models.course import Course
-from app.schemas.course import CourseCreate, CourseOut, CourseUpdate
+from app.schemas.course import CourseCreate, CourseOut, CourseUpdate, BulkCourseCreate
 
 
 async def create_course(course_in: CourseCreate, db: AsyncSession) -> Course:
@@ -89,3 +89,28 @@ async def delete_course_by_id(course_id: int, db: AsyncSession) -> bool:
     :return: True if deleted successfully, otherwise False.
     """
     return await course_crud.delete_by_id(db, course_id)
+
+
+async def create_bulk_courses(
+    bulk_create: BulkCourseCreate, db: AsyncSession
+) -> list[Course]:
+    """
+    Create multiple courses in bulk.
+    
+    :param bulk_create: BulkCourseCreate schema containing courses to create.
+    :param db: Database session.
+    :return: List of created Course objects.
+    """
+    courses = []
+    
+    for course_data in bulk_create.courses:
+        try:
+            course = await course_crud.create(db, course_data)
+            courses.append(course)
+        except Exception as e:
+            # If course code already exists, skip it
+            if "uq_courses_course_code" in str(e):
+                continue
+            raise e
+    
+    return courses

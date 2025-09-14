@@ -15,6 +15,6 @@ class Course(Base):
     description = Column(String, nullable=True)
     grade = Column(
         Integer,
-        nullable=True,
+        nullable=False,
         comment="Grade level of the classroom, e.g., 1 for Grade 1",
     )
